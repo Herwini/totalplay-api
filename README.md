@@ -25,39 +25,32 @@ Python 3, FastAPI, Pydantic, Uvicorn, JSON y Swagger (`/docs`).
 
 ```
 totalplay-api/
-├── main.py             # App de FastAPI, middleware y endpoints (rutas)
-├── modelos.py          # Modelos de Pydantic: validan lo que recibe la API
-├── reglas_negocio.py   # Reglas de negocio reutilizables y manejo de errores
-├── datos.py            # Listas en memoria y funciones de búsqueda
-├── requirements.txt    # Librerías necesarias
+├── main.py           # App de FastAPI, middleware, datos en memoria, reglas de negocio y endpoints
+├── modelos.py        # Modelos de Pydantic: lo que la API recibe y lo que devuelve
+├── requirements.txt  # Librerías necesarias
 └── README.md
 ```
 
 ## Arquitectura
 
-El código separa responsabilidades en capas:
+El proyecto separa dos responsabilidades principales:
 
-| Capa | Archivo | Responsabilidad |
-|---|---|---|
-| Rutas (router) | `main.py` | Recibe la petición HTTP y regresa la respuesta JSON |
-| Esquemas | `modelos.py` | Valida la estructura y los tipos de datos con Pydantic |
-| Servicios | `reglas_negocio.py` | Aplica las reglas del negocio (cliente activo, fechas, paquetes) |
-| Repositorio | `datos.py` | Guarda y busca la información en memoria |
+| Archivo | Responsabilidad |
+|---|---|
+| `modelos.py` | Define con Pydantic la estructura de los datos que **recibe** la API (`ClienteCrear`, `ServicioCrear`, ...) y de los que **devuelve** (`ClienteRespuesta`, `ReporteRespuesta`, ...). |
+| `main.py` | Configura la aplicación, el middleware, guarda los datos en listas, aplica las reglas de negocio con funciones reutilizables y define los endpoints. |
 
 Flujo de una petición:
 
 ```
-Cliente (Swagger/Postman) -> Middleware -> Endpoint (main.py)
-    -> Pydantic valida el body (modelos.py)
-    -> Reglas de negocio (reglas_negocio.py)
-    -> Datos en memoria (datos.py)
-    -> Respuesta JSON
+Cliente (Swagger/Postman) -> Middleware -> Pydantic valida el body (modelos.py)
+    -> Endpoint (main.py) -> Reglas de negocio -> Listas en memoria
+    -> Respuesta JSON validada con response_model
 ```
 
 El **middleware** se ejecuta en todas las peticiones:
 1. Valida que las peticiones `POST` y `PUT` que traen datos los envíen en JSON (si no, responde `415`).
 2. Mide cuánto tarda cada petición y lo agrega en el encabezado `X-Tiempo-Procesamiento`.
-3. Imprime en consola el método, la ruta, el código de respuesta y el tiempo.
 
 ## Instalación y ejecución (Windows)
 
@@ -107,7 +100,6 @@ Con el servidor encendido, abre **http://localhost:8000/docs** para probar la AP
 - La fecha de registro se genera automáticamente si no se envía y no puede ser futura.
 - El costo de un paquete debe ser mayor a 0; los nuevos costos se usan en los cálculos posteriores.
 - El reporte solo incluye clientes activos y calcula el costo según el paquete contratado.
-- El nombre del cliente solo acepta letras y espacios.
 
 ## Códigos de respuesta
 
